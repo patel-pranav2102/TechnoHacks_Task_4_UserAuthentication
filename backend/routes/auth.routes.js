@@ -10,6 +10,10 @@ router.post("/register", async (req, res, next) => {
     const { username, email, password } = req.body;
     if (!username || !email || !password) return res.status(400).json({ message: "All fields required" });
 
+    if (username.length < 5) return res.status(400).json({ message: "Username must be at least 5 characters long" });
+    if (password.length < 8) return res.status(400).json({ message: "Password must be at least 8 characters long" });
+    if (!/(?=.*\d)(?=.*[!@#$%^&*(),.?":{}|<>])/.test(password)) return res.status(400).json({ message: "Password must contain at least one number and one symbol" });
+
     const exists = await User.findOne({ $or: [{ username }, { email }] });
     if (exists) return res.status(409).json({ message: "Username or email already exists" });
 
