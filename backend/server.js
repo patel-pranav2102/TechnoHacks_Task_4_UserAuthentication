@@ -12,6 +12,9 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 5001;
 
+// trust proxy (IMPORTANT for Render)
+app.set("trust proxy", 1);
+
 // connect db
 await connectDB();
 
@@ -20,9 +23,10 @@ initPassport();
 
 // middlewares
 app.use(cors({
-  origin: "https://techno-hacks-task-4-user-authentica.vercel.app",
+  origin: "https://techno-hacks-task-4-user-authentica-eight.vercel.app",
   credentials: true
 }));
+
 app.use(express.json());
 
 app.use(session({
@@ -35,7 +39,8 @@ app.use(session({
   }),
   cookie: {
     httpOnly: true,
-    secure: false,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "none",
     maxAge: 14 * 24 * 60 * 60 * 1000
   }
 }));
@@ -46,7 +51,9 @@ app.use(passport.session());
 app.use("/api/auth", authRoutes);
 
 app.get("/api/protected", (req, res) => {
-  if (!req.isAuthenticated || !req.isAuthenticated()) return res.status(401).json({ message: "Unauthorized" });
+  if (!req.isAuthenticated || !req.isAuthenticated()) {
+    return res.status(401).json({ message: "Unauthorized" });
+  }
   res.json({ secret: "this is protected data", user: req.user });
 });
 
@@ -55,4 +62,6 @@ app.use((err, req, res, next) => {
   res.status(err.status || 500).json({ message: err.message || "Server error" });
 });
 
-app.listen(PORT, () => console.log(`Server listening on http://localhost:${PORT}`));
+app.listen(PORT, () =>
+  console.log(`Server listening on port ${PORT}`)
+);
